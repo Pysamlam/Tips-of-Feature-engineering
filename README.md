@@ -2,4 +2,6 @@
 A feature engineering kit for each issue, to give you a deeper and deeper understanding of the work of feature engineering!
 
 
-![image-20190918225111872](./asserts/sml-pt-03.png)
+![image](./asserts/幻灯片01.png)
+
+> 每一期都会分享一些很实用的特征工程技巧
