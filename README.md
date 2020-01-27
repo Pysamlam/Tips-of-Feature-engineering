@@ -1,4 +1,5 @@
 # Tips-of-Feature-engineering
+
 A feature engineering kit for each issue, to give you a deeper and deeper understanding of the work of feature engineering!
 
 > 每一期都会分享一些很实用的特征工程技巧，目前这里存放了历史的所有期数，最新的期数欢迎关注微信公众号哦（SAMshare）！
@@ -896,6 +897,7 @@ import pandas as pd
 df = pd.read_csv('./data/activity_recognizer/1.csv', header=None)
 df.columns = ['index','x','y','z','activity']
 df.head()
+
 ```
 
 ![image-20200111200231817](./arrests/31.png)
@@ -923,6 +925,324 @@ pd.DataFrame(x_poly, columns=poly.get_feature_names()).head()
 ## Tip16：如何根据变量相关性画出热力图？
 
 上次的锦囊有提及到如何使用`sklearn`来实现多项式的扩展来衍生更多的变量，但是我们也知道其实这样子出来的变量之间的相关性是很强的，我们怎么可以可视化一下呢？这里介绍一个热力图的方式，调用`corr`来实现变量相关性的计算，同时热力图，颜色越深的话，代表相关性越强！
+
+```python
+# 人体胸部加速度数据集,标签activity的数值为1-7
+'''
+1-在电脑前工作
+2-站立、走路和上下楼梯
+3-站立
+4-走路
+5-上下楼梯
+6-与人边走边聊
+7-站立着说话
+
+'''
+import pandas as pd
+from sklearn.preprocessing import PolynomialFeatures
+
+df = pd.read_csv('./data/activity_recognizer/1.csv', header=None)
+df.columns = ['index','x','y','z','activity']
+
+x = df[['x','y','z']]
+y = df['activity']
+
+# 多项式扩充数值变量
+poly = PolynomialFeatures(degree=2, include_bias=False, interaction_only=False)
+
+x_poly = poly.fit_transform(x)
+pd.DataFrame(x_poly, columns=poly.get_feature_names()).head()
+
+# 查看热力图(颜色越深代表相关性越强)
+%matplotlib inline
+import seaborn as sns
+
+sns.heatmap(pd.DataFrame(x_poly, columns=poly.get_feature_names()).corr())
+```
+
+![image-20200111201003846](./arrests/33.png)
+
+
+
+
+## Tip17：如何把分布修正为类正态分布？
+
+今天我们用的是一个新的数据集，也是在kaggle上的一个比赛，大家可以先去下载一下：
+
+![image-20200113205105743](./arrests/34.png)
+
+下载地址：https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
+
+```python
+import pandas as pd
+import numpy as np
+# Plots
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 读取数据集
+train = pd.read_csv('./data/house-prices-advanced-regression-techniques/train.csv')
+train.head()
+
+```
+
+![image-20200113210816071](./arrests/35.png)
+
+
+
+首先这个是一个价格预测的题目，在开始前我们需要看看分布情况，可以调用以下的方法来进行绘制：
+
+```python
+sns.set_style("white")
+sns.set_color_codes(palette='deep')
+f, ax = plt.subplots(figsize=(8, 7))
+#Check the new distribution 
+sns.distplot(train['SalePrice'], color="b");
+ax.xaxis.grid(False)
+ax.set(ylabel="Frequency")
+ax.set(xlabel="SalePrice")
+ax.set(title="SalePrice distribution")
+sns.despine(trim=True, left=True)
+plt.show()
+
+```
+
+![image-20200113210907623](./arrests/36.png)
+
+
+
+我们从结果可以看出，销售价格是右偏，而大多数机器学习模型都不能很好地处理非正态分布数据，所以我们可以应用log(1+x)转换来进行修正。那么具体我们可以怎么用Python代码实现呢？
+
+```python
+# log(1+x) 转换
+train["SalePrice_log"] = np.log1p(train["SalePrice"])
+
+sns.set_style("white")
+sns.set_color_codes(palette='deep')
+f, ax = plt.subplots(figsize=(8, 7))
+
+sns.distplot(train['SalePrice_log'] , fit=norm, color="b");
+
+# 得到正态分布的参数
+(mu, sigma) = norm.fit(train['SalePrice_log'])
+
+plt.legend(['Normal dist. ($\mu=$ {:.2f} and $\sigma=$ {:.2f} )'.format(mu, sigma)],
+            loc='best')
+ax.xaxis.grid(False)
+ax.set(ylabel="Frequency")
+ax.set(xlabel="SalePrice")
+ax.set(title="SalePrice distribution")
+sns.despine(trim=True, left=True)
+
+plt.show()
+```
+
+![image-20200113211509700](./arrests/37.png)
+
+
+
+
+## Tip18：怎么找出数据集中有数据倾斜的特征？
+
+今天我们用的是一个新的数据集，也是在kaggle上的一个比赛，大家可以先去下载一下：
+
+![image-20200113205105743](./arrests/34.png)
+
+下载地址：https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
+
+```python
+import pandas as pd
+import numpy as np
+# Plots
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 读取数据集
+train = pd.read_csv('./data/house-prices-advanced-regression-techniques/train.csv')
+train.head()
+```
+
+![image-20200113210816071](./arrests/35.png)
+
+
+
+我们对数据集进行分析，首先我们可以先看看特征的分布情况，看下哪些特征明显就是有数据倾斜的，然后可以找办法解决，因此，第一步就是要有办法找到这些特征。
+
+首先可以通过可视化的方式，画箱体图，然后观察箱体情况，理论知识是：
+
+> 在箱线图中，箱子的中间有一条线，代表了数据的中位数。箱子的上下底，分别是数据的上四分位数（Q3）和下四分位数（Q1），这意味着箱体包含了50%的数据。因此，**箱子的高度在一定程度上反映了数据的波动程度**。上下边缘则代表了该组数据的最大值和最小值。有时候箱子外部会有一些点，可以理解为数据中的“**异常值**”。而对于数据倾斜的，我们叫做“偏态”，与正态分布相对，指的是非对称分布的偏斜状态。在统计学上，众数和平均数之差可作为分配偏态的指标之一：如平均数大于众数，称为正偏态（或右偏态）；相反，则称为负偏态（或左偏态）。
+
+
+
+```python
+# 丢弃y值
+all_features = train.drop(['SalePrice'], axis=1)
+
+# 找出所有的数值型变量
+numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+numeric = []
+for i in all_features.columns:
+    if all_features[i].dtype in numeric_dtypes:
+        numeric.append(i)
+        
+# 对所有的数值型变量绘制箱体图
+sns.set_style("white")
+f, ax = plt.subplots(figsize=(8, 7))
+ax.set_xscale("log")
+ax = sns.boxplot(data=all_features[numeric] , orient="h", palette="Set1")
+ax.xaxis.grid(False)
+ax.set(ylabel="Feature names")
+ax.set(xlabel="Numeric values")
+ax.set(title="Numeric Distribution of Features")
+sns.despine(trim=True, left=True)
+```
+
+![image-20200114215939603](./arrests/38.png)
+
+可以看出有一些特征，有一些数据会偏离箱体外，因此属于数据倾斜。但是，我们从上面的可视化中虽然看出来了，但是想要选出来还是比较麻烦，所以这里引入一个偏态的概念，相对应的有一个指标`skew`，这个就是代表偏态的系数。
+
+> Skewness：描述数据分布形态的统计量，其描述的是某总体取值分布的**对称性**，简单来说就是数据的不对称程度。
+>
+> 偏度是三阶中心距计算出来的。
+>
+> （1）Skewness = 0 ，分布形态与正态分布偏度相同。
+>
+> （2）Skewness > 0 ，正偏差数值较大，为正偏或右偏。长尾巴拖在右边，数据右端有较多的极端值。
+>
+> （3）Skewness < 0 ，负偏差数值较大，为负偏或左偏。长尾巴拖在左边，数据左端有较多的极端值。
+>
+> （4）数值的绝对值越大，表明数据分布越不对称，偏斜程度大。
+
+那么在Python里可以怎么实现呢？
+
+```python
+# 找出明显偏态的数值型变量
+skew_features = all_features[numeric].apply(lambda x: skew(x)).sort_values(ascending=False)
+
+high_skew = skew_features[skew_features > 0.5]
+skew_index = high_skew.index
+
+print("本数据集中有 {} 个数值型变量的 Skew > 0.5 :".format(high_skew.shape[0]))
+skewness = pd.DataFrame({'Skew' :high_skew})
+skew_features.head(10)
+```
+
+![image-20200114220316028](./arrests/39.png)
+
+
+
+
+## Tip19：怎么尽可能地修正数据倾斜的特征？
+
+上一个锦囊，分享了给大家通过`skew`的方法来找到数据集中有数据倾斜的特征（特征锦囊：怎么找出数据集中有数据倾斜的特征？），那么怎么去修正它呢？正是今天要分享给大家的锦囊！
+
+
+
+还是用到房价预测的数据集：
+
+![image-20200113205105743](./arrests/34.png)
+
+下载地址：https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
+
+```python
+import pandas as pd
+import numpy as np
+# Plots
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# 读取数据集
+train = pd.read_csv('./data/house-prices-advanced-regression-techniques/train.csv')
+train.head()
+```
+
+![image-20200113210816071](./arrests/35.png)
+
+
+
+我们通过上次的知识，知道了可以通过`skewness`来进行倾斜特征的辨别，那么对于修正它的办法，这里也先分享一个理论知识 —— **box-cox转换**。
+
+> 线性回归模型满足线性性、独立性、方差齐性以及正态性的同时，又不丢失信息，此种变换称之为Box—Cox变换。
+>
+> Box-Cox变换是Box和Cox在1964年提出的一种广义幂变换方法，是统计建模中常用的一种[数据](https://baike.baidu.com/item/数据/33305)变换，用于连续的响应变量不满足正态分布的情况。Box-Cox变换之后，可以一定程度上减小不可观测的误差和预测变量的相关性。Box-Cox变换的主要特点是引入一个参数，通过数据本身估计该参数进而确定应采取的数据变换形式，Box-Cox变换可以明显地改善数据的正态性、对称性和方差相等性，对许多实际数据都是行之有效的。—— 百度百科
+
+
+
+在使用前，我们先看看原先倾斜的特征有多少个。
+
+
+
+```python
+# 丢弃y值
+all_features = train.drop(['SalePrice'], axis=1)
+
+# 找出所有的数值型变量
+numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+numeric = []
+for i in all_features.columns:
+    if all_features[i].dtype in numeric_dtypes:
+        numeric.append(i)
+        
+# 找出明显偏态的数值型变量
+skew_features = all_features[numeric].apply(lambda x: skew(x)).sort_values(ascending=False)
+
+high_skew = skew_features[skew_features > 0.5]
+skew_index = high_skew.index
+
+print("本数据集中有 {} 个数值型变量的 Skew > 0.5 :".format(high_skew.shape[0]))
+skewness = pd.DataFrame({'Skew' :high_skew})
+skew_features
+```
+
+> 本数据集中有 24 个数值型变量的 Skew > 0.5 :
+
+
+
+在Python中怎么使用Box-Cox 转换呢？很简单。
+
+```python
+# 通过 Box-Cox 转换，从而把倾斜的数据进行修正
+for i in skew_index:
+    all_features[i] = boxcox1p(all_features[i], boxcox_normmax(all_features[i] + 1))
+```
+
+
+
+然后我们再看看还有多少个数据倾斜的特征吧！
+
+```python
+# 找出明显偏态的数值型变量
+skew_features = all_features[numeric].apply(lambda x: skew(x)).sort_values(ascending=False)
+
+high_skew = skew_features[skew_features > 0.5]
+skew_index = high_skew.index
+print("本数据集中有 {} 个数值型变量的 Skew > 0.5 :".format(high_skew.shape[0]))
+skewness = pd.DataFrame({'Skew' :high_skew})
+```
+
+> 本数据集中有 15 个数值型变量的 Skew > 0.5 :
+
+
+
+变少了很多，而且如果看他们的skew值，也会发现变小了很多。我们也可以看看转换后的箱体图情况。
+
+```python
+# Let's make sure we handled all the skewed values
+sns.set_style("white")
+f, ax = plt.subplots(figsize=(8, 7))
+ax.set_xscale("log")
+ax = sns.boxplot(data=all_features[skew_index] , orient="h", palette="Set1")
+ax.xaxis.grid(False)
+ax.set(ylabel="Feature names")
+ax.set(xlabel="Numeric values")
+ax.set(title="Numeric Distribution of Features")
+sns.despine(trim=True, left=True)
+```
+
+![image-20200117212535708](./arrests/40.png)
+
+
+![image](./arrests/底图2.0.png)是很强的，我们怎么可以可视化一下呢？这里介绍一个热力图的方式，调用`corr`来实现变量相关性的计算，同时热力图，颜色越深的话，代表相关性越强！
 
 ```python
 # 人体胸部加速度数据集,标签activity的数值为1-7
