@@ -13,7 +13,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 
 ## 🚗 持续更新
 
-* [Tip1：特征无量纲化的常见操作方法](#Tip1：特征无量纲化的常见操作方法)
+- [Tip1：特征无量纲化的常见操作方法](#Tip1：特征无量纲化的常见操作方法)
 * [Tip2：怎么进行多项式or对数的数据变换](#Tip2：怎么进行多项式or对数的数据变换)
 * [Tip3：常用的统计图在Python里怎么画?](#Tip3：常用的统计图在Python里怎么画?)
 * [Tip4：怎么去除DataFrame里的缺失值？](#Tip4：怎么去除DataFrame里的缺失值？)
@@ -30,8 +30,8 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip15：如何使用sklearn的多项式来衍生更多的变量？](#Tip15：如何使用sklearn的多项式来衍生更多的变量？)
 * [Tip16：如何根据变量相关性画出热力图？](#Tip16：如何根据变量相关性画出热力图？)
 * [Tip17：如何把分布修正为类正态分布？](#Tip17：如何把分布修正为类正态分布？)
-* [Tip18：怎么找出数据集中有数据倾斜的特征？](#Tip18：怎么找出数据集中有数据倾斜的特征？)
-* [Tip19：怎么尽可能地修正数据倾斜的特征？](#Tip19：怎么尽可能地修正数据倾斜的特征？)
+* [Tip18：怎么找出数据集中有数据倾斜的特征？](#tip18：怎么找出数据集中有数据倾斜的特征？)
+- [Tip19：怎么尽可能地修正数据倾斜的特征？](#tip19：怎么尽可能地修正数据倾斜的特征？)
 
 
 
