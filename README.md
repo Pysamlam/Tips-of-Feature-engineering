@@ -32,6 +32,8 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip17：如何把分布修正为类正态分布？](#tip17如何把分布修正为类正态分布)
 * [Tip18：怎么找出数据集中有数据倾斜的特征？](#tip18怎么找出数据集中有数据倾斜的特征)
 * [Tip19：怎么尽可能地修正数据倾斜的特征？](#tip19怎么尽可能地修正数据倾斜的特征)
+* [Tip20：怎么简单使用PCA来划分数据且可视化呢？](#Tip20怎么简单使用PCA来划分数据且可视化呢)
+* [Tip21：怎么简单使用LDA来划分数据且可视化呢？](#Tip21怎么简单使用LDA来划分数据且可视化呢)
 
 
 
@@ -1239,7 +1241,137 @@ sns.despine(trim=True, left=True)
 
 ![image-20200117212535708](./arrests/40.png)
 
+## Tip20：怎么简单使用PCA来划分数据且可视化呢？
 
+PCA算法在数据挖掘中是很基础的降维算法，简单回顾一下定义：
+
+> PCA，全称为Principal Component Analysis，也就是主成分分析方法，是一种降维算法，其功能就是把N维的特征，通过转换映射到K维上（K<N），这些由原先N维的投射后的K个正交特征，就被称为主成分。
+
+
+
+我们在这里使用的数据集iris，来弄一个demo：
+
+```python
+# 导入相关库
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+%matplotlib inline
+
+#解决中文显示问题，Mac
+%matplotlib inline
+from matplotlib.font_manager import FontProperties
+# 设置显示的尺寸
+plt.rcParams['font.family'] = ['Arial Unicode MS'] #正常显示中文
+
+# 导入数据集
+iris = load_iris()
+iris_x, iris_y = iris.data, iris.target
+
+# 实例化
+pca = PCA(n_components=2)
+
+# 训练数据
+pca.fit(iris_x)
+pca.transform(iris_x)[:5,]
+
+# 自定义一个可视化的方法
+label_dict = {i:k for i,k in enumerate(iris.target_names)}
+def plot(x,y,title,x_label,y_label):
+    ax = plt.subplot(111)
+    for label,marker,color in zip(
+    range(3),('^','s','o'),('blue','red','green')):
+        plt.scatter(x=x[:,0].real[y == label],
+                   y = x[:,1].real[y == label],
+                   color = color,
+                   alpha = 0.5,
+                   label = label_dict[label]
+                   )
+        
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    
+    leg = plt.legend(loc='upper right', fancybox=True)
+    leg.get_frame().set_alpha(0.5)
+    plt.title(title)
+
+# 可视化
+plot(iris_x, iris_y,"原始的iris数据集","sepal length(cm)","sepal width(cm)")
+plt.show()
+
+plot(pca.transform(iris_x), iris_y,"PCA转换后的头两个正交特征","PCA1","PCA2")
+```
+
+![image-20200129161705398](./arrests/41.png)
+
+我们通过自定义的绘图函数`plot`，把不同类别的y值进行不同颜色的显示，从而看出在值域上分布的差异。从原始的特征来看，不同类别之间其实界限并不是十分明显，如上图所示。而进行PCA转换后，可以看出不同类别之间的界限有了比较明显的差异。
+
+
+
+
+
+## Tip21：怎么简单使用LDA来划分数据且可视化呢？
+
+LDA算法在数据挖掘中是很基础的算法，简单回顾一下定义：
+
+> LDA的全称为Linear Discriminant Analysis, 中文为线性判别分析，LDA是一种有监督学习的算法，和PCA不同。PCA是无监督算法，。LDA是“投影后类内方差最小，类间方差最大”，也就是将数据投影到低维度上，投影后希望每一种类别数据的投影点尽可能的接近，而不同类别的数据的类别中心之间的距离尽可能的大。
+
+我们在这里使用的数据集iris，来弄一个demo：
+
+```python
+# 导入相关库
+from sklearn.datasets import load_iris
+import matplotlib.pyplot as plt
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+%matplotlib inline
+
+#解决中文显示问题，Mac
+%matplotlib inline
+from matplotlib.font_manager import FontProperties
+# 设置显示的尺寸
+plt.rcParams['font.family'] = ['Arial Unicode MS'] #正常显示中文
+
+# 导入数据集
+iris = load_iris()
+iris_x, iris_y = iris.data, iris.target
+
+# 实例化
+lda = LinearDiscriminantAnalysis(n_components=2)
+
+# 训练数据
+x_lda_iris = lda.fit_transform(iris_x, iris_y)
+
+
+# 自定义一个可视化的方法
+label_dict = {i:k for i,k in enumerate(iris.target_names)}
+def plot(x,y,title,x_label,y_label):
+    ax = plt.subplot(111)
+    for label,marker,color in zip(
+    range(3),('^','s','o'),('blue','red','green')):
+        plt.scatter(x=x[:,0].real[y == label],
+                   y = x[:,1].real[y == label],
+                   color = color,
+                   alpha = 0.5,
+                   label = label_dict[label]
+                   )
+        
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    
+    leg = plt.legend(loc='upper right', fancybox=True)
+    leg.get_frame().set_alpha(0.5)
+    plt.title(title)
+
+# 可视化
+plot(iris_x, iris_y,"原始的iris数据集","sepal length(cm)","sepal width(cm)")
+plt.show()
+
+plot(x_lda_iris, iris_y, "LDA Projection", "LDA1", "LDA2")
+```
+
+![image-20200129174752001](./arrests/42.png)
+
+ 
 ![image](./arrests/底图2.0.png)
 最新的发布内容请关注个人微信公众号哈~
 
