@@ -1,4 +1,4 @@
-# Tips-of-Feature-engineering
+# 🏆 Tips-of-Feature-engineering
 
 A feature engineering kit for each issue, to give you a deeper and deeper understanding of the work of feature engineering!
 
@@ -11,7 +11,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 首先是当前更新到的目录，方便大家去查找内容！
 
 
-## 🚗 持续更新
+## 🚗 Keep updating
 
 * [Tip1：特征无量纲化的常见操作方法](#tip1特征无量纲化的常见操作方法)
 * [Tip2：怎么进行多项式or对数的数据变换](#tip2怎么进行多项式or对数的数据变换)
