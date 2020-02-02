@@ -10,7 +10,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 
 首先是当前更新到的目录，方便大家去查找内容！
 
-数据集大家可以[点击这里](#https://github.com/Pysamlam/Tips-of-Feature-engineering/blob/master/data/README.md#-this-folder-is-used-to-store-the-data-sets-used-in-the-examples-and-you-can-download-them-according-to-your-needs-)去进行下载哈😆
+#### 数据集大家可以[点击这里](https://github.com/Pysamlam/Tips-of-Feature-engineering/tree/master/data)去进行下载哈😆
 
 ## 🚗 Keep updating
 
