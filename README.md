@@ -71,8 +71,8 @@ MinMaxScaler().fit_transform(iris.data)
 from sklearn.preprocessing import Normalizer  
 Normalizer().fit_transform(iris.data)
 ```
-<a href="#目录Keep-updating">回到目录哦🚗</a>
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -161,7 +161,8 @@ from sklearn.preprocessing import FunctionTransformer
 #第一个参数是单变元函数  
 FunctionTransformer(log1p).fit_transform(iris.data)  
 ```
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -239,7 +240,8 @@ fig, ax = plt.subplots(figsize=(10,5))
 ax.scatter(x, y)
 plt.show()
 ```
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip4：怎么去除DataFrame里的缺失值？
@@ -296,7 +298,8 @@ data.dropna(axis=0, inplace=True)
 
 ![image-20191228081435160](./arrests/8.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -343,7 +346,8 @@ pima.isnull().sum()
 
 ![image-20191228083228056](./arrests/9.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -396,7 +400,8 @@ cci.fit_transform(X)
 
 ![image-20191231230946764](./arrests/11.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip7：怎么定义一个方法去填充数值变量的空值？
@@ -447,7 +452,8 @@ cqi.fit_transform(X)
 ![image-20191231231355341](./arrests/12.png)
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 ## Tip8：怎么把几个图表一起在同一张图上显示？
 
@@ -530,7 +536,8 @@ plt.show()
 
 我们从上面的可视化操作结果可以看出，其实可以看出一些规律，比如说生还的几率比死亡的要大，然后获救的人在年龄上区别不大，然后就是有钱人（坐头等舱的）的年龄会偏大等。
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -583,7 +590,8 @@ plt.show()
 
 ![image-20200105094525846](./arrests/15.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -644,7 +652,8 @@ data_train['Age'].value_counts().sort_index()
 
 ![image-20200105201854156](./arrests/20.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 ## Tip11：怎么通过正则提取字符串里的指定内容?
 
@@ -717,7 +726,8 @@ print(re.findall(r'xx(.+?)xx',str)[0])
 所以，看了这些后，应该就可以理解上面的pattern的含义了！
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip12：如何利用字典批量修改变量值？
@@ -775,7 +785,8 @@ data.Title.value_counts()
 ![image-20200108083335530](./arrests/26.png)
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip13：如何对类别变量进行独热编码？
@@ -826,7 +837,8 @@ data.head()
 
 对了，这里有些同学可能会问，还有一种独热编码出来的是N-1个字段的又是什么？另外这种的话，我们是称为`dummy encoding`的，也就是哑变量编码，它把任意一个状态位去除，也就是说其中有一类变量值的哑变量表示为全0。更多的内容建议可以百度深入了解哈。
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip14：如何把“年龄”字段按照我们的阈值分段？
@@ -872,7 +884,8 @@ data.head()
 这样子就很神奇了吧，把年龄按照我们的需求进行分组，顺便使用独热编码生成了新的字段。
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -922,7 +935,8 @@ pd.DataFrame(x_poly, columns=poly.get_feature_names()).head()
 
 ![image-20200111200347306](./arrests/32.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip16：如何根据变量相关性画出热力图？
@@ -965,7 +979,8 @@ sns.heatmap(pd.DataFrame(x_poly, columns=poly.get_feature_names()).corr())
 
 ![image-20200111201003846](./arrests/33.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 ## Tip17：如何把分布修正为类正态分布？
@@ -1043,7 +1058,8 @@ plt.show()
 ![image-20200113211509700](./arrests/37.png)
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 ## Tip18：怎么找出数据集中有数据倾斜的特征？
 
@@ -1133,7 +1149,8 @@ skew_features.head(10)
 ![image-20200114220316028](./arrests/39.png)
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 ## Tip19：怎么尽可能地修正数据倾斜的特征？
 
@@ -1244,6 +1261,9 @@ sns.despine(trim=True, left=True)
 
 ![image-20200117212535708](./arrests/40.png)
 
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
+ 
 ## Tip20：怎么简单使用PCA来划分数据且可视化呢？
 
 PCA算法在数据挖掘中是很基础的降维算法，简单回顾一下定义：
@@ -1309,7 +1329,8 @@ plot(pca.transform(iris_x), iris_y,"PCA转换后的头两个正交特征","PCA1"
 
 我们通过自定义的绘图函数`plot`，把不同类别的y值进行不同颜色的显示，从而看出在值域上分布的差异。从原始的特征来看，不同类别之间其实界限并不是十分明显，如上图所示。而进行PCA转换后，可以看出不同类别之间的界限有了比较明显的差异。
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 
 
 
@@ -1374,7 +1395,8 @@ plot(x_lda_iris, iris_y, "LDA Projection", "LDA1", "LDA2")
 
 ![image-20200129174752001](./arrests/42.png)
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 ## Tip22：怎么来管理我们的建模项目文件？
 
 这个专题其实很久之前在我的一篇文章里有比较详细的介绍，可以戳[《分享8点超级有用的Python编程建议》](https://mp.weixin.qq.com/s/eOeXA0ctErvd2mmEexZcBA)，但是今天我还是想把其中的一个内容重点来说一下，大家可以先看看这张图，这个我们在做建模项目时，个人比较推荐的一个建项目文件的demo。
@@ -1391,7 +1413,8 @@ plot(x_lda_iris, iris_y, "LDA Projection", "LDA1", "LDA2")
 * model：存放不同算法的最终版本代码的文件夹
 * data：存放数据的文件夹，里面还会分不同类别去存放数据，比如external（来自第三方的数据）、interim（经过部分清洗转换的数据源，如SQL、SAS）、raw（原始数据集，不添加任何加工）、processed（最终用于建模的数据集）、code（用于储存数据清洗的代码）
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
+ 
 ## Tip23：怎么批量把特征中的离群点给安排一下？
 
 这个专栏停了也有一段时间了，自从上次对之前的内容进行了一次梳理之后，似乎是给自己一个“借口”休息了一阵子，现在感觉还是得重新拿出来继续更新了。
