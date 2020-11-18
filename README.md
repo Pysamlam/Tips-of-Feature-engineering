@@ -36,7 +36,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip20：怎么简单使用PCA来划分数据且可视化呢？](#Tip20怎么简单使用PCA来划分数据且可视化呢)
 * [Tip21：怎么简单使用LDA来划分数据且可视化呢？](#Tip21怎么简单使用LDA来划分数据且可视化呢)
 * [Tip22：怎么来管理我们的建模项目文件？](#Tip22怎么来管理我们的建模项目文件)
-
+* [Tip23：怎么批量把特征中的离群点给“安排一下”？](#Tip23怎么批量把特征中的离群点给“安排一下”)
 
 
 
@@ -1391,6 +1391,79 @@ plot(x_lda_iris, iris_y, "LDA Projection", "LDA1", "LDA2")
 * data：存放数据的文件夹，里面还会分不同类别去存放数据，比如external（来自第三方的数据）、interim（经过部分清洗转换的数据源，如SQL、SAS）、raw（原始数据集，不添加任何加工）、processed（最终用于建模的数据集）、code（用于储存数据清洗的代码）
 
 
+## Tip23：怎么批量把特征中的离群点给“安排一下”？
+
+这个专栏停了也有一段时间了，自从上次对之前的内容进行了一次梳理之后，似乎是给自己一个“借口”休息了一阵子，现在感觉还是得重新拿出来继续更新了。
+
+```python
+# 导入数据集
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+train = pd.read_csv('./data/Group-Image-of-Consumers/train_dataset.csv')
+test = pd.read_csv('./data/Group-Image-of-Consumers/test_dataset.csv')
+data = pd.concat([train, test], ignore_index=True)
+data.head()
+```
+
+![image-20200403211901868](./arrests/44.png)
+
+我们简单从里面挑选几个数值型变量来看看分布情况吧，画图的技巧这里就不说了，可以参考之前画箱体图的那篇镜囊文章。
+
+```python
+# 挑选其中几个变量
+feature_list=['当月网购类应用使用次数','当月金融理财类应用使用总次数','当月视频播放类应用使用次数']
+
+# 绘制箱体图
+sns.set_style("white")
+f, ax = plt.subplots(figsize=(8, 7))
+ax.set_xscale("log")
+ax = sns.boxplot(data=data[feature_list] , orient="h", palette="Set1")
+ax.xaxis.grid(False)
+ax.set(ylabel="Feature names")
+ax.set(xlabel="Numeric values")
+ax.set(title="Numeric Distribution of Features")
+sns.despine(trim=True, left=True)
+```
+
+![image-20200403212339978](./arrests/45.png)
+
+可以看到红色框框圈起来的就是我们的离群点，那么我们可以怎么处理一下呢？这里给大家介绍一个方法，代码如下：
+
+```python
+def process(all_data,feature_list):
+    #处理离群点
+    for col in feature_list:
+        ulimit=np.percentile(all_data[col].values, 99.9) #计算一个多维数组的任意百分比分位数
+        llimit=np.percentile(all_data[col].values, 0.1)
+        all_data.loc[all_data[col]>ulimit,col]=ulimit  # 大于99.9%的直接赋值
+        all_data.loc[all_data[col]<llimit,col]=llimit
+    return all_data
+```
+
+使用刚刚我们编写的那个方法：
+
+```python
+# 使用函数进行极端值的转换
+data_new = process(data,feature_list)
+
+# 绘制箱体图
+sns.set_style("white")
+f, ax = plt.subplots(figsize=(8, 7))
+ax.set_xscale("log")
+ax = sns.boxplot(data=data_new[feature_list] , orient="h", palette="Set1")
+ax.xaxis.grid(False)
+ax.set(ylabel="Feature names")
+ax.set(xlabel="Numeric values")
+ax.set(title="Numeric Distribution of Features")
+sns.despine(trim=True, left=True)
+```
+
+![image-20200403212552077](./arrests/46.png)
+
+see!我们的异常值就会被直接“安排”了，是不是很简单呢？其实异常值的处理还是有很大方法的，今天就抛砖引玉一下，更多的方法等待大家去挖掘哦！
 
 ![image](./arrests/底图2.0.png)
 
