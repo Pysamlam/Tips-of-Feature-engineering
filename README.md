@@ -12,7 +12,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 
 #### 数据集大家可以[点击这里](https://github.com/Pysamlam/Tips-of-Feature-engineering/tree/master/data)去进行下载哈😆
 
-## 🚗 Keep updating
+## 目录：Keep updating
 
 * [Tip1：特征无量纲化的常见操作方法](#tip1特征无量纲化的常见操作方法)
 * [Tip2：怎么进行多项式or对数的数据变换](#tip2怎么进行多项式or对数的数据变换)
@@ -71,7 +71,7 @@ from sklearn.preprocessing import Normalizer
 Normalizer().fit_transform(iris.data)
 ```
 
-* [回到目录🚗](#Keep updating)
+[目录：Keep updating](#目录Keep updating)
 
 
 
