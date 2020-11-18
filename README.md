@@ -39,11 +39,8 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip23：怎么批量把特征中的离群点给安排一下？](#Tip23怎么批量把特征中的离群点给安排一下)
 
 
-[目录：Keep updating](#目录Keep updating)
-[回到目录](#目录Keepupdating)
-<a href="#目录：Keep updating">跳转到更新</a>
-<a href="#目录Keep updating">跳转到更新</a>
-<a href="#目录Keep updating">跳转到更新</a>
+
+
 
 ## Tip1：特征无量纲化的常见操作方法
 
@@ -74,7 +71,7 @@ MinMaxScaler().fit_transform(iris.data)
 from sklearn.preprocessing import Normalizer  
 Normalizer().fit_transform(iris.data)
 ```
-
+<a href="#目录Keep-updating">回到目录哦🚗</a>
 
 
 
