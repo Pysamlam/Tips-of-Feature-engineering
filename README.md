@@ -6,7 +6,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 专项突破，每一期都会分享一些很实用的**特征工程**技巧，从理论到实践，循序渐进，目前本项目已累计撰写了28期内容，为了方便统一阅读，📦打包成了一份PDF供朋友们下载。
 欢迎关注微信公众号《SAMshare》，与作者阿Sam取得交流！
 
-![image](./arrests/image.png)
+![image](./arrests/公众号二维码.jpg)
 
 随着我们在机器学习、数据建模、数据挖掘分析这条发展路上越走越远，其实越会感觉到特征工程的重要性，平时我们在很多地方都会看到一些很好的特征工程技巧，本项目的目的就是把这些小技巧打包成一个又一个的小锦囊，供大家去阅读。
 
@@ -40,7 +40,7 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip22：怎么来管理我们的建模项目文件？](#Tip22怎么来管理我们的建模项目文件)
 * [Tip23：怎么批量把特征中的离群点给安排一下？](#Tip23怎么批量把特征中的离群点给安排一下)
 * [Tip24：彻底了解一下WOE和IV](#Tip24彻底了解一下WOE和IV)
-* [Tip25：一文介绍特征工程里的卡方分箱，附代码实现](#Tip25一文介绍特征工程里的卡方分箱，附代码实现)
+* [Tip25：一文介绍特征工程里的卡方分箱，附代码实现](#tip25一文介绍特征工程里的卡方分箱附代码实现)
 * [Tip26：今天一起搞懂机器学习里的L1与L2正则化](#Tip26今天一起搞懂机器学习里的L1与L2正则化)
 * [Tip27：金融风控里的WOE前的分箱一定要单调吗？](#Tip27金融风控里的WOE前的分箱一定要单调吗)
 * [Tip28：如何在Python中处理不平衡数据](#Tip28如何在Python中处理不平衡数据)
