@@ -2,7 +2,9 @@
 
 A feature engineering kit for each issue, to give you a deeper and deeper understanding of the work of feature engineering!
 
-> 每一期都会分享一些很实用的特征工程技巧，目前这里存放了历史的所有期数，最新的期数欢迎关注微信公众号哦（SAMshare）！
+
+专项突破，每一期都会分享一些很实用的**特征工程**技巧，从理论到实践，循序渐进，目前本项目已累计撰写了28期内容，为了方便统一阅读，📦打包成了一份PDF供朋友们下载。
+欢迎关注微信公众号《SAMshare》，与作者阿Sam取得交流！
 
 ![image](./arrests/image.png)
 
@@ -1494,6 +1496,7 @@ sns.despine(trim=True, left=True)
 
 see!我们的异常值就会被直接“安排”了，是不是很简单呢？其实异常值的处理还是有很大方法的，今天就抛砖引玉一下，更多的方法等待大家去挖掘哦！
 
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
 
 ## Tip24：彻底了解一下WOE和IV
 
@@ -1747,7 +1750,7 @@ iv_series
 
 如果想复现代码，可以从我的公号后台输出  'age' 去获取测试集吧，或者拿自己目前的数据集来玩玩也可以，不过得注意一些细节，转换数据格式。
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
 
 ## Tip25：一文介绍特征工程里的卡方分箱，附代码实现
 
@@ -2063,7 +2066,7 @@ iv
 
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
 
 ## Tip26：今天一起搞懂机器学习里的L1与L2正则化
 
@@ -2176,7 +2179,7 @@ http://www.chioka.in/differences-between-l1-and-l2-as-loss-function-and-regulari
 https://www.kaggle.com/residentmario/l1-norms-versus-l2-norms
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
 
 
 ## Tip27：金融风控里的WOE前的分箱一定要单调吗
@@ -2301,7 +2304,7 @@ WOE不一定都需要是单调的，只要从业务角度可以解释得通，�
 
 
 
-
+<a href="#目录Keep-updating">😋 点我可以回到目录哦 🚗</a>
 
 ## Tip28：如何在Python中处理不平衡数据
 
