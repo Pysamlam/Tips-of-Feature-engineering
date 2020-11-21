@@ -37,6 +37,11 @@ A feature engineering kit for each issue, to give you a deeper and deeper unders
 * [Tip21：怎么简单使用LDA来划分数据且可视化呢？](#Tip21怎么简单使用LDA来划分数据且可视化呢)
 * [Tip22：怎么来管理我们的建模项目文件？](#Tip22怎么来管理我们的建模项目文件)
 * [Tip23：怎么批量把特征中的离群点给安排一下？](#Tip23怎么批量把特征中的离群点给安排一下)
+* [Tip24：彻底了解一下WOE和IV](#Tip24彻底了解一下WOE和IV)
+* [Tip25：一文介绍特征工程里的卡方分箱，附代码实现](#Tip25一文介绍特征工程里的卡方分箱，附代码实现)
+* [Tip26：今天一起搞懂机器学习里的L1与L2正则化](#Tip26今天一起搞懂机器学习里的L1与L2正则化)
+* [Tip27：金融风控里的WOE前的分箱一定要单调吗？](#Tip27金融风控里的WOE前的分箱一定要单调吗)
+* [Tip28：如何在Python中处理不平衡数据](#Tip28如何在Python中处理不平衡数据)
 
 
 
@@ -1488,6 +1493,1152 @@ sns.despine(trim=True, left=True)
 ![image-20200403212552077](./arrests/46.png)
 
 see!我们的异常值就会被直接“安排”了，是不是很简单呢？其实异常值的处理还是有很大方法的，今天就抛砖引玉一下，更多的方法等待大家去挖掘哦！
+
+
+## Tip24：彻底了解一下WOE和IV
+
+第一次接触这两个名词是在做风控模型的时候，老师教我们可以用IV去做变量筛选，IV（Information Value），中文名是信息值，简单来说这个指标的作用就是来衡量变量的预测能力强弱的，然后IV又是WOE算出来的。姑且先不管原理哈，我们先给出来一下结论。
+
+| IV范围    | 变量预测力 |
+| --------- | ---------- |
+| <0.02     | 无预测力😯  |
+| 0.02~0.10 | 弱👎        |
+| 0.10~0.30 | 中等😊      |
+| `> 0.30   | 强👍        |
+
+虽然可能这个指标还是很容易就可以使用，但是了解它的原理是十分重要的，这对于我们深入理解变量有很大的帮助。
+
+
+
+在开始讲原理前，先约定一下今天会用到的一些代号。
+
+$y_i$ : 第i组中响应客户数量
+
+$y_{all}$ : 全部响应客户数量总和
+
+$n_i$ ：第i组中未响应客户数量
+
+$n_{all}$ ：全部未响应客户数量总和
+
+响应/未响应：指的是自变量每个记录对应的目标变量的值，目标变量的值为0或1，一般如果1为响应的话，0就是未响应。
+
+$IV_i$：第i组的IV值
+
+$Py_i$：等于 $y_i/y_{all}$
+
+$Pn_i$：等于 $n_i/n_{all}$
+
+可以看看下面的表格理解一波，变量A是一个连续型变量，值域是v1-vx，当前根据某些分箱方式分成了m组，具体的分组情况如下所示：
+
+![image-20200730223421518](./arrests/48.png)
+
+
+
+#### WOE的原理
+
+WOE是weight of evidence的缩写，是一种编码形式，首先我们要知道WOE是针对类别变量而言的，所以连续性变量需要提前做好分组（这里也是一个很好的考点，也有会说分箱、离散化的，变量优化也可以从这个角度出发）。
+
+先给出数学计算公式，对于第i组的WOE可以这么计算：
+
+$$WOE_i = ln(\frac{y_i/y_{all}}{n_i/n_{all}})$$
+
+从公式上可以看出，第i组的WOE值等于这个组的响应客户占所有响应客户的比例与未响应客户占所有未响应客户的比例的比值取对数。对于上面的公式我们还可以 简单做一下转化：
+
+$$WOE_i = ln(\frac{y_i/y_{all}}{n_i/n_{all}}) = ln(\frac{y_i/n_i}{y_{all}/n_{all}})$$
+
+所以，WOE主要就是体现组内的好坏占比与整体的差异化程度大小，WOE越大，差异越大。
+
+
+
+#### IV的原理
+
+上面我们介绍了如何计算一个分组的WOE值，那么我们就可以把变量所有分组的WOE值给算出来了，对应地，每个分组也有一个IV值，我们叫  $IV_i$ ，其中：
+
+$$IV_i = (Py_i-Pn_i)*WOE_i$$
+
+$$IV = \displaystyle\sum^{n}_{i}{IV_i} $$
+
+计算这个变量的IV值就是这样子就可以了，把每个分组的IV值给加起来。
+
+
+
+#### 实际案例
+
+好了，上面的理论也讲了一些了，还是拿一个实际的变量来计算一下。
+
+我们来假设一个场景，我们需要卖茶叶，然后我们不知道从哪里拿来了一份1000人的营销名单（手机号码），然后就批量添加微信好友，最后有500个手机号码可以成功搜索到微信号的，进而进行了好友添加，最终有100人成功添加到好友了。
+
+我们这份名单上，有客户的年龄字段，那么我们可以拿来计算一下这个字段对于是否成功添加好友（响应）有多大的预测能力，我们在Excel中进行实现：
+
+![image-20200801081041030](./arrests/49.png)
+
+可以看出来，这个变量对于我们是否可以成功加到客户微信好友有着很强的预测能力。
+
+
+
+#### Python实现
+
+我们知道，针对连续型变量，是需要先转换为类别变量才可以进行IV值的计算的，现在我们把数据导入到Python中，原始变量是连续型变量，那么我们如何在Python里实现IV值的计算呢？如下图：（其中target=1代表响应，target=0代表未响应）
+
+![image-20200801092020512](./arrests/50.png)
+
+核心代码就是下面的：
+
+```python
+def iv_count(data_bad, data_good):
+    '''计算iv值'''
+    value_list = set(data_bad.unique()) | set(data_good.unique())
+    iv = 0
+    len_bad = len(data_bad)
+    len_good = len(data_good)
+    for value in value_list:
+        # 判断是否某类是否为0，避免出现无穷小值和无穷大值
+        if sum(data_bad == value) == 0:
+            bad_rate = 1 / len_bad
+        else:
+            bad_rate = sum(data_bad == value) / len_bad
+        if sum(data_good == value) == 0:
+            good_rate = 1 / len_good
+        else:
+            good_rate = sum(data_good == value) / len_good
+        iv += (good_rate - bad_rate) * math.log(good_rate / bad_rate,2)
+        print(value,iv)
+    return iv
+```
+
+
+
+那么我们如何使用呢，一步一步来：
+
+##### Step1：导入数据
+
+测试数据集可以后台回复 'age' 进行获取。
+
+```Python
+data = pd.read_csv('./data/age.csv')
+
+# 定义必要的参数
+feature = data.loc[:,['age']]
+labels = data['target']
+keep_cols = ['age']
+cut_bin_dict = {'age':[0,18,25,30,40,50,100]}
+```
+
+##### Step2：按照指定阈值分箱
+
+按照我们之前Excel相同的分箱逻辑进行分箱:
+
+```python
+cut_bin = cut_bin_dict['age']
+# 按照分箱阈值分箱,并将缺失值替换成Blank,区分好坏样本
+data_bad = pd.cut(feature['age'], cut_bin, right=False).cat.add_categories(['Blank']).fillna('Blank')[labels == 1]
+data_good = pd.cut(feature['age'], cut_bin, right=False
+                   ).cat.add_categories(['Blank']).fillna('Blank')[labels == 0]
+
+value_list = set(data_bad.unique()) | set(data_good.unique())
+value_list
+```
+
+![image-20200801092640472](./arrests/51.png)
+
+##### Step3：调用函数计算IV
+
+```python
+iv_series['age'] = iv_count(data_bad, data_good)
+iv_series
+
+```
+
+![image-20200801092803440](./arrests/52.png)
+
+可以看得出，和我们Excel计算的结果完全一致！
+
+
+
+#### “我要打10个”版本
+
+嗯，上面针对单个的变量IV计算是会了，那么如果有一堆需要你计算IV的变量，可以如何处理呢?其实，原理很简单，就是写个循环，这里呢已经写好了一个，大家可以参考一下的。这边有一些细节的东西需要说明一下的。
+
+1）注意区分变量类型，数值型变量和类别型变量要区分对待。
+
+2）注意分组后是否出现某组内的响应(未响应)数量为零的情况，如果为零需要处理一下。
+
+代码放上，大家可以试着运行一下：
+
+```python
+def get_iv_series(feature, labels, keep_cols=None, cut_bin_dict=None):
+    '''
+    计算各变量最大的iv值,get_iv_series方法出入参如下:
+    ------------------------------------------------------------
+    入参结果如下:
+        feature: 数据集的特征空间
+        labels: 数据集的输出空间
+        keep_cols: 需计算iv值的变量列表
+        cut_bin_dict: 数值型变量要进行分箱的阈值字典,格式为{'col1':[value1,value2,...], 'col2':[value1,value2,...], ...}
+    ------------------------------------------------------------
+    入参结果如下:
+        iv_series: 各变量最大的IV值
+    '''
+    def iv_count(data_bad, data_good):
+        '''计算iv值'''
+        value_list = set(data_bad.unique()) | set(data_good.unique())
+        iv = 0
+        len_bad = len(data_bad)
+        len_good = len(data_good)
+        for value in value_list:
+            # 判断是否某类是否为0，避免出现无穷小值和无穷大值
+            if sum(data_bad == value) == 0:
+                bad_rate = 1 / len_bad
+            else:
+                bad_rate = sum(data_bad == value) / len_bad
+            if sum(data_good == value) == 0:
+                good_rate = 1 / len_good
+            else:
+                good_rate = sum(data_good == value) / len_good
+            iv += (good_rate - bad_rate) * math.log(good_rate / bad_rate,2)
+        return iv
+
+    if keep_cols is None:
+        keep_cols = sorted(list(feature.columns))
+    col_types = feature[keep_cols].dtypes
+    categorical_feature = list(col_types[col_types == 'object'].index)
+    numerical_feature = list(col_types[col_types != 'object'].index)
+
+    iv_series = pd.Series()
+
+    # 遍历数值变量计算iv值
+    for col in numerical_feature:
+        cut_bin = cut_bin_dict[col]
+        # 按照分箱阈值分箱,并将缺失值替换成Blank,区分好坏样本
+        data_bad = pd.cut(feature[col], cut_bin, right=False).cat.add_categories(['Blank']).fillna('Blank')[labels == 1]
+        data_good = pd.cut(feature[col], cut_bin, right=False
+                           ).cat.add_categories(['Blank']).fillna('Blank')[labels == 0]
+        iv_series[col] = iv_count(data_bad, data_good)
+    # 遍历类别变量计算iv值
+    for col in categorical_feature:
+        # 将缺失值替换成Blank,区分好坏样本
+        data_bad = feature[col].fillna('Blank')[labels == 1]
+        data_good = feature[col].fillna('Blank')[labels == 0]
+        iv_series[col] = iv_count(data_bad, data_good)
+
+    return iv_series
+```
+
+##### 调用demo：
+
+```python
+iv_series = get_iv_series(feature, labels, keep_cols, cut_bin_dict=cut_bin_dict)
+iv_series
+# age    0.434409
+```
+
+
+
+#### 总结一下
+
+记住IV值的预测能力映射：
+
+| IV范围    | 变量预测力 |
+| --------- | ---------- |
+| <0.02     | 无预测力😯  |
+| 0.02~0.10 | 弱👎        |
+| 0.10~0.30 | 中等😊      |
+| `> 0.30   | 强👍        |
+
+如果想复现代码，可以从我的公号后台输出  'age' 去获取测试集吧，或者拿自己目前的数据集来玩玩也可以，不过得注意一些细节，转换数据格式。
+
+
+
+## Tip25：一文介绍特征工程里的卡方分箱，附代码实现
+
+今天还是讲一下金融风控的相关知识，上一次我们有讲到，如果我们需要计算变量的IV值，从而判断变量的预测能力强弱，是需要对变量进行离散化的，也就是分箱处理。那么，今天就来给大家解释一下其中一种分箱方式 —— 卡方分箱处理。
+
+
+
+#### ✍️ 了解卡方分布
+
+了解卡方分箱，首先需要了解下卡方分布。卡方分布(chi-square distribution, χ2-distribution)是概率统计里常用的一种概率分布，也是统计推断里应用最广泛的概率分布之一，在假设检验与置信区间的计算中经常能见到卡方分布的身影，其定义如下：
+
+> 若k个相互独立的随机变量$Z_1$, $Z_2$, $Z_3$, ..., $Z_k$ 满足标准正态分布 N(0,1)，那么这k个随机变量的平方和 $X=\displaystyle\sum^{k}_{i=1}{Z_i^2}$就是服从自由度为k的卡方分布了，一般记作：$X ～  X^2(k)$
+
+其概率密度函数如下所示（图片来自百度百科）：
+
+![image-20200816203804735](./arrests/53.png)
+
+
+
+#### ✍️了解下卡方检测
+
+卡方检测是以卡方分布为基础的一种假设检验方法，主要是用于检验分类变量之间的独立性情况。它的基本思想就是根据样本数据推断总体分布与期望分布之间是否存在显著性差异，或者说两个分类变量之间是否相互独立（or是否相关）。
+
+**一般的情况下我们会把原假设设置为：观察频数与期望频数之间没有差异，也就是说两个分类变量之间是相互独立不相关的**。
+
+实际的应用中我们假设原假设成立，然后计算出卡方值，从而来决策是否需要拒绝原假设，卡方值的计算公式如下：
+
+$X_k^2= \sum{\frac{(A-E)^2}{E}} $
+
+其中，A为实际频数，E为期望频数，卡方值就是计算实际与期望之间的差异程度大小的量化指标。上面公式结果服从卡方分布，然后我们根据卡方分布、卡方统计量以及自由度，就可以查出p值，如果p值很小，代表观察值与期望值偏离程度很大，那么就需要拒绝原假设，也就是说两个分类变量之间有相关性。
+
+
+
+#### 🔍 卡方分布表
+
+这个概念貌似在大一的时候就有接触过了，可以知道横轴是分位数，纵轴是自由度，然后类似于Python的loc方法，定位到的值就是卡方值了。（比如，要找分位数位0.9，自由度为8的值，查表可知为3.489539
+
+![image-20200826222449796](./arrests/54.png)
+
+如果想要在Python里生成卡方分布表，可以尝试下面的代码：
+
+```python
+# 用Python生成卡方分布临界值表
+import numpy as np
+import pandas as pd
+from scipy.stats import chi2
+ 
+# chi square distribution
+percents = [0.995, 0.990, 0.975, 0.950, 0.900, 0.100, 0.050, 0.025, 0.010, 0.005]
+df = pd.DataFrame(np.array([chi2.isf(percents, df=i) for i in range(1, 10)]), columns=percents, index=list(range(1,10)))
+df
+
+```
+
+
+
+#### 🤔 举个栗子
+
+我们有一组数据，是某种病的患者使用了A和B两种不同方案的治疗，所得到的治疗结果，如下表所示，问A、B两种疗法是否有明显差异？
+
+| 组别 | 有效 | 无效 | 合计 | 有效率% |
+| ---- | ---- | ---- | ---- | ------- |
+| A组  | 19   | 24   | 43   | 44.2%   |
+| B组  | 34   | 10   | 44   | 77.3%   |
+| 合计 | 53   | 34   | 87   | 60.9%   |
+
+##### 解：
+
+这道题其实就是套公式，从上面我了解到要计算卡方值可以有这个公式：
+
+![image-20200826223921485](./arrests/55.png)
+
+所以，我们先算出每个格子的期望频数：
+
+示例1：A组有效的期望频数：43*53/87=26.20
+
+| 期望频数 | 有效  | 无效  | 合计 | 有效率% |
+| -------- | ----- | ----- | ---- | ------- |
+| A组      | 26.20 | 16.80 | 43   | 60.9%   |
+| B组      | 26.80 | 17.20 | 44   | 60.9%   |
+| 合计     | 53    | 34    | 87   | 60.9%   |
+
+**先建立原假设：A、B两种疗法没有区别。**
+
+然后就套入上面的公式：（A为实际频数，E为期望频数）
+
+$X_k^2= \sum{\frac{(A-E)^2}{E}} = \frac{(19-26.2)^2}{26.2} +\frac{(24-16.8)^2}{16.8} + \frac{(34-26.8)^2}{26.8} + \frac{(10-17.2)^2}{17.2} = 10.01$
+
+因为我们选择了其中一个方案，另外一个方案就明确了，所以自由度是1，因此可以查表，自由度为1的，而且卡方值为10.01的分位数是多少了～
+
+查表自由度为1,p=0.05的卡方值为3.841，而此例卡方值10.01>3.841，因此 p < 0.05，说明原假设在0.05的显著性水平下是可以拒绝的，也就是说原假设不成立，也就是两种治疗方案有区别。
+
+
+
+#### 😆 进入正题
+
+上面讲了这么多基础的知识，就是为了引出这一节的内容—— ChiMerge分箱算法。
+
+ChiMerge卡方分箱算法由Kerber于1992提出。它主要包括两个阶段：**初始化阶段和自底向上的合并阶段。**
+
+##### 1、初始化阶段：
+
+首先按照属性值的大小进行排序（对于非连续特征，需要先做数值转换，比如转为坏人率，然后排序），然后每个属性值单独作为一组。
+
+##### 2、合并阶段：
+
+（1）对每一对相邻的组，计算卡方值。
+
+（2）根据计算的卡方值，对其中最小的一对邻组合并为一组。
+
+（3）不断重复（1）和（2）直到计算出的卡方值都不低于事先设定的阈值，或者分组数达到一定的条件（如最小分组数5，最大分组数8）。
+
+值得注意的是，阿Sam之前发现有的实现方法在合并阶段，计算的并非相邻组的卡方值（只考虑在此两组内的样本，并计算期望频数），因为他们用整体样本来计算此相邻两组的期望频数。
+
+了解了原理之后，那么Python如何实现呢？请看下面的代码：
+
+##### Step1:导入相关库
+
+```python
+import numpy as np
+from scipy.stats import chi
+import pandas as pd
+from pandas import DataFrame,Series
+import scipy
+
+```
+
+##### Step2:计算卡方值
+
+```python
+def chi3(arr):
+   '''
+  计算卡方值
+  arr:频数统计表,二维numpy数组。
+  '''
+   assert(arr.ndim==2)
+   #计算每行总频数
+   R_N = arr.sum(axis=1)
+   #每列总频数
+   C_N = arr.sum(axis=0)
+   #总频数
+   N = arr.sum()
+   # 计算期望频数 C_i * R_j / N。
+   E = np.ones(arr.shape)* C_N / N
+   E = (E.T * R_N).T
+   square = (arr-E)**2 / E
+   #期望频数为0时，做除数没有意义，不计入卡方值
+   square[E==0] = 0
+   #卡方值
+   v = square.sum()
+   return v
+
+```
+
+##### Step3:确定卡方分箱点
+
+```python
+def chiMerge(df,col,target,max_groups=None,threshold=None):
+
+   '''
+  卡方分箱
+  df: pandas dataframe数据集
+  col: 需要分箱的变量名（数值型）
+  target: 类标签
+  max_groups: 最大分组数。
+  threshold: 卡方阈值，如果未指定max_groups，默认使用置信度95%设置threshold。
+  return: 包括各组的起始值的列表.
+  '''
+
+   freq_tab = pd.crosstab(df[col],df[target])
+
+   #转成numpy数组用于计算。
+   freq = freq_tab.values
+
+   #初始分组切分点，每个变量值都是切分点。每组中只包含一个变量值.
+
+   #分组区间是左闭右开的，如cutoffs = [1,2,3]，则表示区间 [1,2) , [2,3) ,[3,3+)。
+   cutoffs = freq_tab.index.values
+
+   #如果没有指定最大分组
+   if max_groups is None:    
+       #如果没有指定卡方阈值，就以95%的置信度（自由度为类数目-1）设定阈值。
+       if threshold is None:
+           #类数目
+           cls_num = freq.shape[-1]
+           threshold = chi2.isf(0.05,df= cls_num - 1)
+
+   while True:
+       minvalue = None
+       minidx = None
+       #从第1组开始，依次取两组计算卡方值，并判断是否小于当前最小的卡方
+       for i in range(len(freq) - 1):
+           v = chi3(freq[i:i+2])
+           if minvalue is None or (minvalue > v): #小于当前最小卡方，更新最小值
+               minvalue = v
+               minidx = i
+
+       #如果最小卡方值小于阈值，则合并最小卡方值的相邻两组，并继续循环
+       if (max_groups is not None and  max_groups< len(freq) ) or (threshold is not None and minvalue < threshold):
+           #minidx后一行合并到minidx
+           tmp = freq[minidx] + freq[minidx+1]
+           freq[minidx] = tmp
+           #删除minidx后一行
+           freq = np.delete(freq,minidx+1,0)
+           #删除对应的切分点
+           cutoffs = np.delete(cutoffs,minidx+1,0)
+
+       else: #最小卡方值不小于阈值，停止合并。
+           break
+   return cutoffs
+
+```
+
+##### Step4:生成分组后的新变量
+
+```python
+def value2group(x,cutoffs):
+
+   '''
+  将变量的值转换成相应的组。
+  x: 需要转换到分组的值
+  cutoffs: 各组的起始值。
+  return: x对应的组，如group1。从group1开始。
+  '''
+
+   #切分点从小到大排序。
+   cutoffs = sorted(cutoffs)
+   num_groups = len(cutoffs)
+
+   #异常情况：小于第一组的起始值。这里直接放到第一组。
+   #异常值建议在分组之前先处理妥善。
+   if x < cutoffs[0]:
+       return 'group1'
+
+   for i in range(1,num_groups):
+       if cutoffs[i-1] <= x < cutoffs[i]:
+           return 'group{}'.format(i)
+
+   #最后一组，也可能会包括一些非常大的异常值。
+   return 'group{}'.format(num_groups)
+
+```
+
+##### Step5:实现WOE编码
+
+```python
+def calWOE(df ,var ,target):
+
+   '''
+  计算WOE编码
+  param df：数据集pandas.dataframe
+  param var：已分组的列名，无缺失值
+  param target：响应变量（0,1）
+  return：编码字典
+  '''
+   eps = 0.000001  #避免除以0
+   gbi = pd.crosstab(df[var],df[target]) + eps
+   gb = df[target].value_counts() + eps
+   gbri = gbi/gb
+   gbri['woe'] = np.log(gbri[1]/gbri[0])
+   return gbri['woe'].to_dict()
+
+```
+
+##### Step6:实现IV值计算
+
+```python
+def calIV(df,var,target):
+
+   '''
+  计算IV值
+  param df：数据集pandas.dataframe
+  param var：已分组的列名，无缺失值
+  param target：响应变量（0,1）
+  return：IV值
+  '''
+   eps = 0.000001  #避免除以0
+   gbi = pd.crosstab(df[var],df[target]) + eps
+   gb = df[target].value_counts() + eps
+   gbri = gbi/gb
+   gbri['woe'] = np.log(gbri[1]/gbri[0])
+   gbri['iv'] = (gbri[1] - gbri[0])*gbri['woe']
+   return gbri['iv'].sum()
+
+```
+
+##### Step7:Python代码使用
+
+```python
+cutoffs = chiMerge(data,'MAX_AMOUNT','target',max_groups=8)
+
+'''
+PS：绝大数情况下，会将缺失值NaN归类到最后一组，如果不想这么简单粗暴的，需要在最开始的时候对缺失值进行填充。
+'''
+
+data['MAX_AMOUNT_chigroup'] = data['MAX_AMOUNT'].apply(value2group,args=(cutoffs,))
+r = data.loc[:,['MAX_、AMOUNT','MAX_AMOUNT_chigroup','target']]
+woe_map = calWOE(data,'MAX_AMOUNT_chigroup','target')
+iv = calIV(data,'MAX_AMOUNT_chigroup','target')
+iv
+
+```
+
+
+
+#### 📖 Reference
+
+[1] Python评分卡建模—卡方分箱（1）
+
+[2] Python评分卡建模—卡方分箱（2）之代码实现
+
+[3] python评分卡建模—实现WOE编码及IV值计算
+
+
+
+
+
+## Tip26：今天一起搞懂机器学习里的L1与L2正则化
+
+今天我们来讲讲一个理论知识，也是老生常谈的内容，在模型开发相关岗位中出场率较高的，那就是L1与L2正则化了，这个看似简单却十分重要的概念，还是需要深入了解的。网上有蛮多的学习资料，今天我就着自己的理解也写一下笔记。📒
+
+从西瓜书📖里我们可以了解到正则项的作用，那就是降低模型过拟合的风险，通常常用的有L1范数正则化与L2范数正则化，作为单独一项（正则项）加入到损失函数中，也可以自己作为损失函数。🐝
+
+#### 📖 L1 and L2 范数
+
+在了解L1和L2范数之前，我们可以先来了解一下范数（norm）的定义，根据参考文献[2]的说明：
+
+> A norm is a mathematical thing that is applied to a vector (like the vector `β` above). The norm of a vector maps vector values to values in `[0,∞)`. In machine learning, norms are useful because they are used to express distances: this vector and this vector are so-and-so far apart, according to this-or-that norm.
+
+简单来说也就是范数其实在 `[0,∞)`范围内的值，是向量的投影大小，在机器学习中一般会勇于衡量向量的距离。范数有很多种，我们常见的有L1-norm和L2-norm，其实还有L3-norm、L4-norm等等，所以抽象来表示，我们会写作`Lp-norm`，一般表示为 $||x||_p$ :
+
+$||x||_p = \displaystyle (\sum^{}_{i}{|x_i|^p})^{1/p}$
+
+对于上面这个抽象的公式，如果我们代入p值，
+
+若p为1，则就是我们常说的L1-norm：
+
+$||x||_1 = \displaystyle \sum^{}_{i}{|x_i|} = |x_1|+|x_2|+...+|x_i|$
+
+若p为2，则是我们常说的L2-norm：
+
+$||x||_2 = \displaystyle \sqrt{(\sum^{}_{i}{|x_i|^2})} = \displaystyle \sqrt{x1^2+x2^2+...+x_i^2}$
+
+我们引用文章里的图片，L2-norm的距离就是两个黑点之间的绿线，而另外的3条线，都是L1-norm的大小。
+
+![image-20200926210610300](./arrests/56.png)
+
+
+
+#### ✍️ L1 and L2正则项
+
+在上面我们有提及到，L1、L2范数可以用于损失函数里的一个正则化项，作用就是降低模型复杂度，减小过拟合的风险。这里的正则化项，存在的目的就是作为一个“惩罚项”，对损失函数中的某一些参数做一些限制，是结构风险最小化策略的体现，就是选择经验风险（平均损失函数）和模型复杂度同时较小的模型。
+
+针对线性回归模型，假设对其代价函数里加入正则化项，其中L1和L2正则化项的表示分别如下所示，其中`λ >= 0`，是用来平衡正则化项和经验风险的系数。
+
+（1）使用L1范数正则化，其模型也被叫作Lasso回归（Least Absolute Shrinkage and Selection Operator，最小绝对收缩选择算子）。
+
+（2）使用L2范数正则化，其模型被叫做Ridge回归，中文为岭回归。
+
+![image-20200926212526709](./arrests/57.png)
+
+
+
+#### 🚙 机器学习中一般怎么选择正则项
+
+上面介绍的L1和L2范数正则化都有着降低过拟合风险的功能，但它们有什么不同？我们到底应该选择哪一个呢，两者之间各有什么优势和适用场景？别急，我们一一来展开讲讲。
+
+##### Q1：L1和L2正则化项的区别？
+
+首先，我们从上面那张二维的图可以看出，对于L2-norm，其解是唯一的，也就是绿色的那条；而对于L1-norm，其解不唯一，因此L1正则化项，其计算难度通常会高于L2的。
+
+其次，**L1通常是比L2更容易得到稀疏输出的**，会把一些不重要的特征直接置零，至于为什么L1正则化为什么更容易得到稀疏解，可以看下图：
+
+![image-20200926215608638](./arrests/58.png)
+
+上图代表的意思就是目标函数-平方误差项的等值线和L1、L2范数等值线（左边是L1），我们正则化后的代价函数需要求解的目标就是在经验风险和模型复杂度之间的平衡取舍，在图中形象地表示就是黑色线与彩色线的交叉点。
+
+对于L1范数，其图形为菱形，二维属性的等值线有4个角（高维的会有更多），“突出来的角”更容易与平方误差项进行交叉，而这些“突出来的角”都是在坐标轴上，即W1或则W2为0；
+
+而对于L2范数，交叉点一般都是在某个象限中，很少有直接在坐标轴上交叉的。
+
+因此L1范数正则化项比L2的更容易得到稀疏解。
+
+
+
+##### Q2：各有什么优势，如何作选择？
+
+直接上结论：
+
+1）因为L1范数正则化项的“稀疏解”特性，L1更适合用于特征选择，找出较为“关键”的特征，而把一些不那么重要的特征置为零。
+
+2）L2范数正则化项可以产生很多参数值很小的模型，也就是说这类的模型抗干扰的能力很强，可以适应不同的数据集，适应不同的“极端条件”。
+
+
+
+#### 🤔 如何作为Loss Function
+
+讲完了作为正则化项的内容了，那么讲讲L1、L2范数作为损失函数的情况。假设我们有一个线性回归模型，我们需要评估模型的效果，很常规的，我们会用“距离”来衡量误差！
+
+若使用L1-norm来衡量距离，那就是我们的LAD（Least Absolute Deviation，最小绝对偏差），其优化的目标函数如下：
+
+$S = \displaystyle \sum^{n}_{i=1}{|y_i-f(x_i)|}$
+
+实际意义上的解释就是预测值与真实值之间的绝对值。
+
+若使用L2-norm，那就是我们的LSE（Least Squares Error，最小二乘误差），其优化的目标函数如下：
+
+$S = \displaystyle \sum^{n}_{i=1}{(y_i-f(x_i))^2}$
+
+针对两者的差异，可以看下表：
+
+![image-20200926222805570](./arrests/59.png)
+
+L1损失函数的结果更具鲁棒性，也就是说对于异常值更加不敏感。而根据其范数“天性”，L2的求解更为简单与“唯一”。
+
+
+
+#### 📖 Reference
+
+[1] Differences between L1 and L2 as Loss Function and Regularization
+
+http://www.chioka.in/differences-between-l1-and-l2-as-loss-function-and-regularization/
+
+[2] L1 Norms versus L2 Norms
+
+https://www.kaggle.com/residentmario/l1-norms-versus-l2-norms
+
+
+
+
+
+## Tip27：金融风控里的WOE前的分箱一定要单调吗
+
+#### 🚗 Index
+
+* ✍️ 背景交代
+
+* 🎥 WOE回顾
+* 🤔 LR模型的入参一定要WOE吗？
+
+* 🤔 WOE不单调可以进LR模型吗？
+
+  * 针对不同类型的变量
+
+  * 为什么需要WOE具备单调性
+
+* 🏆 结论复盘
+
+
+
+今天我们来讲讲一个金融风控里的“常识点”，就是那种我们习以为常但若要讲出个所以然来比较困难的点，正如标题所言：**WOE前的分箱一定要单调吗？**🤔
+
+#### ✍️ 背景交代
+
+相信每一个在金融风控领域做过模型的人，应该对分箱满足badrate单调性有一定的认知，特别是在用逻辑回归做A卡的时候，老司机们会经常对我们说变量要满足单调性，当变量单调了，再进行WOE转换，然后作为LR的入参喂给模型，简单训练一下就收工。但作为一个合格的风控建模大师，仅仅知道这些套路还是不够的，我们需要进一步去思考一下当中的原理，或者说是更进一步去追问一下自己：
+
+> LR模型的入参一定要WOE吗？
+>
+> WOE转化前的变量分箱结果的badrate一定需要满足单调性吗？
+>
+> 连续变量难道就不可以直接进LR模型吗？
+
+希望大家在阅读完本篇文章后，多多少少可以对上面的问题有一定的了解～
+
+
+
+#### 🎥 WOE回顾
+
+在我们开始拆解问题前，有一个知识点需要回顾一下，那就是WOE。
+
+> WOE是weight of evidence的缩写，是一种编码形式，首先我们要知道WOE是针对类别变量而言的，所以连续性变量需要提前做好分组（这里也是一个很好的考点，也有会说分箱、离散化的，变量优化也可以从这个角度出发）。
+
+先给出数学计算公式，对于第i组的WOE可以这么计算：
+
+$$WOE_i = ln(\frac{y_i/y_{all}}{n_i/n_{all}})$$
+
+从公式上可以看出，第i组的WOE值等于这个组的响应客户占所有响应客户的比例与未响应客户占所有未响应客户的比例的比值取对数。对于上面的公式我们还可以 简单做一下转化：
+
+$$WOE_i = ln(\frac{y_i/y_{all}}{n_i/n_{all}}) = ln(\frac{y_i/n_i}{y_{all}/n_{all}})$$
+
+所以，WOE主要就是体现组内的好坏占比与整体的差异化程度大小，WOE越大，差异越大。
+
+更多的内容可以浏览一下之前的文章《特征锦囊：彻底了解一下WOE和IV》。
+
+
+
+#### 🤔 LR模型的入参一定要WOE吗？
+
+The answer is no！并非所有LR的入参都需要WOE的，也可以是直接原始值入模型的。但存在即合理，为什么大家都在说要对变量进行WOE编码呢？我们可以引出下面两个问题：
+
+* 什么情况下用WOE比较合适？
+* 以及用WOE有什么好处
+
+我们知道，在风控领域的变量可以大致分为两类，就是数值型变量以及类别型变量，前者就是类似于年龄、逾期天数等，后者就是职业类别、行业类别等。
+
+针对类别型变量，我们很容易可以想到使用one-hot编码来，但是这种编码方式有一定的缺陷，那就是对于枚举值特别多的变量，独热编码之后十分稀疏从而特征空间很大，另外如果丢弃一部分维度则会造成信息丢失，指不定这些是关键的信息。以上的信息说明了放入LR中很难有很好的效果。
+
+而针对数值型变量，很多同学则会有更大的疑问，那就是为什么要分箱然后又进行WOE转换这么麻烦，反正都可以直接入模型的，何必多此一举？
+
+当然了！这个想法也是没错的，在本小节开头也已经说明了，并非要求所有的变量都要进行WOE编码然后进入模型。**而什么情况下十分适合WOE转换呢，那就是变量本身与y值并非存在直接线性关系的时候。**
+
+![image-20201018152118144](./arrests/60.png)
+
+我们看上面的图，“年龄”这个字段经常性地会出现在我们的A卡模型里，作为预测一个客户信用水平的衡量指标。我们可以清楚知道，age这个变量的badrate分布，经常性会呈现“U型”，业务解释就是：年轻人和老年人的还款能力会比中年人的要低，风险也因此更高。从统计角度看，年龄与违约率，便不是一个线性关系！
+
+我们回忆一下LR模型（Logistic Regression），从本质上讲，LR就是经过对训练集的学习，得到一组权值w，当有新的一组数据x输入时，根据公式计算出结果，然后经过Sigmoid函数判断这个数据所属的类别。
+
+$$h_w(x) = w_0+w_1x_1+w_2x_2+...+w_nx_n$$
+
+假如我们的年龄就是上面的x1，并且模型只有一个变量，那么随着x1的变大，$h_w(x)$的值也会不断变大，而不是像上图一样呈现“U型”，说明了这是一个非线性的问题，但如果我们对年龄进行WOE转换，就可以看到如右图所示的那样，随着WOE的增大，goodrate也增大这种线性关系（badrate=1-goodrate，因此和badrate也是线形关系）。
+
+以上也是使用WOE编码的一个最大好处，也就是把badrate呈现非线性的变量转换为线形，便于理解也便于后续模型求解。此外，WOE编码还有一个好处，那就是具有“容错性”，因为WOE编码其实也可以理解为需要预先分箱，那么对于异常值没那么敏感，对于单个变量的异常波动不会有太大反应。
+
+
+
+#### 🤔 WOE不单调可以进LR模型吗？
+
+那么我们回到最初的问题，那就是如标题所说的：WOE前的分箱一定要单调吗？结论是不一定需要单调。要深入了解这答案，我们可以看看下面两个讨论：
+
+##### 01 针对不同类型的变量
+
+1）针对类别变量😋
+
+类别变量可以分有序和无序变量。
+
+针对有序类别变量，比如像学历，我们分箱的时候要保证原始顺序的前提下，进行不同原始组别的合并，完成分箱，然后需要看分箱的badrate单调性，最后才来看WOE单调性情况。
+
+针对无序类别变量，无序类别变量又可以根据枚举值的多少拆分为两类：多枚举无序类别变量和少枚举无序类别变量。无论是哪一种，我们都可以根据对每个枚举值的badrate统计得到其量化指标，然后根据badrate进行适当的类别合并，完成分箱操作，这时候的分箱结果，天然单调！而针对少枚举无序类别变量，我们还可以根据业务认识，进行类别的合并，比如像中国大区字段（华南、华北等），WOE编码后，也不做严格的单调性要求。
+
+2）针对数值变量😆
+
+进行合适的分箱算法进行分箱后的bin，需要满足badrate单调性，然后才进行WOE编码。不过呢，这个也不是严格要求的。
+
+##### 02 为什么需要WOE具备单调性
+
+WOE不一定都需要是单调的，只要从业务角度可以解释得通，那就没有问题！就好像上面的那个栗子，年龄字段，WOE就不是单调的，但从业务上可以解释得通，那就没有问题！
+
+如果从业务上解释是需要单调性，但分组后的WOE并没有单调，那么这时候有两条路可以选择，一是重新分组然后重新计算WOE，二是放弃这个变量。
+
+最后提一下，如果不单调的变量不进行WOE编码直接进入LR模型，一般都是很难求解的，因为很难找到一个线性公式来描述关系。
+
+
+
+#### 🏆 结论复盘
+
+1）LR模型的入参不一定都要WOE转换，直接进行模型也是可以的，只是遇上不单调的变量会比较难求解罢了，可选择丢弃。
+
+2）使用WOE编码的一个最大好处是把badrate呈现非线性的变量转换为线形，便于理解也便于后续模型求解，进行了WOE编码的模型对于异常值没那么敏感，单个变量的异常波动不会对模型造成很大反应。
+
+3）WOE并不一定都需要是单调的，只要从业务角度可以解释得通即可。
+
+
+
+
+
+## Tip28：如何在Python中处理不平衡数据
+
+#### 🚙 Index
+
+1、到底什么是不平衡数据
+
+2、处理不平衡数据的理论方法
+
+3、Python里有什么包可以处理不平衡样本
+
+4、Python中具体如何处理失衡样本
+
+
+
+印象中很久之前有位朋友说要我写一篇如何处理不平衡数据的文章，整理相关的理论与实践知识（可惜本人太懒了，现在才开始写），于是乎有了今天的文章。失衡样本在我们真实世界中是十分常见的，那么我们在机器学习（ML）中使用这些失衡样本数据会出现什么问题呢？如何处理这些失衡样本呢？以下的内容希望对你有所帮助！
+
+#### 🤔 到底什么是不平衡数据
+
+失衡数据发生在分类应用场景中，在分类问题中，类别之间的分布不均匀就是失衡的根本，假设有个二分类问题，target为y，那么y的取值范围为0和1，当其中一方（比如y=1）的占比远小于另一方（y=0）的时候，就是失衡样本了。
+
+那么到底是需要差异多少，才算是失衡呢，根本Google Developer的说法，我们一般可以把失衡分为3个程度：
+
+* 轻度：20-40%
+* 中度：1-20%
+* 极度：<1%
+
+一般来说，失衡样本在我们构建模型的时候看不出什么问题，而且往往我们还可以得到很高的accuracy，为什么呢？假设我们有一个极度失衡的样本，y=1的占比为1%，那么，我们训练的模型，会偏向于把测试集预测为0，这样子模型整体的预测准确性就会有一个很好看的数字，如果我们只是关注这个指标的话，可能就会被骗了。
+
+
+
+#### 📖 处理不平衡数据的理论方法
+
+在我们开始用Python处理失衡样本之前，我们先来了解一波关于处理失衡样本的一些理论知识，前辈们关于这类问题的解决方案，主要包括以下：
+
+* 从数据角度：通过应用一些欠采样or过采样技术来处理失衡样本。欠采样就是对多数类进行抽样，保留少数类的全量，使得两类的数量相当，过采样就是对少数类进行多次重复采样，保留多数类的全量，使得两类的数量相当。但是，这类做法也有弊端，欠采样会导致我们丢失一部分的信息，可能包含了一些重要的信息，过采样则会导致分类器容易过拟合。当然，也可以是两种技术的相互结合。
+* 从算法角度：算法角度的解决方案就是可以通过对每类的训练实例给予一定权值的调整。比如像在SVM这样子的有参分类器中，可以应用grid search（网格搜索）以及交叉验证（cross validation）来优化C以及gamma值。而对于决策树这类的非参数模型，可以通过调整树叶节点上的概率估计从而实现效果优化。
+
+此外，也有研究员从数据以及算法的结合角度来看待这类问题，提出了两者结合体的AdaOUBoost（adaptive over-sampling and undersampling boost）算法，这个算法的新颖之处在于自适应地对少数类样本进行过采样，然后对多数类样本进行欠采样，以形成不同的分类器，并根据其准确度将这些子分类器组合在一起从而形成强大的分类器，更多的请参考：
+
+> AdaOUBoost：https://dl.acm.org/doi/10.1145/1743384.1743408
+
+
+
+#### 🚀 Python里有什么包可以处理不平衡样本
+
+这里介绍一个很不错的包，叫 **imbalanced-learn**，大家可以在电脑上安装一下使用。
+
+> 官方文档：https://imbalanced-learn.readthedocs.io/en/stable/index.html
+
+```shell
+pip install -U imbalanced-learn
+
+```
+
+![image-20201114201826826](./arrests/61.png)
+
+使用上面的包，我们就可以实现样本的欠采样、过采样，并且可以利用pipeline的方式来实现两者的结合，十分方便，我们下一节来简单使用一下吧！
+
+
+
+#### 🦈 Python中具体如何处理失衡样本
+
+为了更好滴理解，我们引入一个数据集，来自于UCI机器学习存储库的营销活动数据集。(数据集大家可以自己去官网下载：https://archive.ics.uci.edu/ml/machine-learning-databases/00222/  下载bank-additional.zip 或者到公众号后台回复关键字“bank”来获取吧。)
+
+我们在完成imblearn库的安装之后，就可以开始简单的操作了（其余更加复杂的操作可以直接看官方文档），以下我会从4方面来演示如何用Python处理失衡样本，分别是：
+
+🌈1、随机欠采样的实现
+
+🌈2、使用SMOTE进行过采样
+
+🌈3、欠采样和过采样的结合（使用pipeline）
+
+🌈4、如何获取最佳的采样率？
+
+
+
+##### 🚗🚗🚗 那我们开始吧！
+
+```python
+# 导入相关的库（主要就是imblearn库）
+from collections import Counter
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+import pandas as pd
+import numpy as np
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report, roc_auc_score
+from numpy import mean
+
+# 导入数据
+df = pd.read_csv(r'./data/bank-additional/bank-additional-full.csv', ';') # '';'' 为分隔符
+df.head()
+
+```
+
+![image-20201114203736871](./arrests/62.png)
+
+
+
+数据集是葡萄牙银行的某次营销活动的数据，其营销目标就是让客户订阅他们的产品，然后他们通过与客户的电话沟通以及其他渠道获取到的客户信息，组成了这个数据集。
+
+关于字段释义，可以看下面的截图：
+
+![image-20201114203827825](./arrests/63.png)
+
+我们可以大致看看数据集是不是失衡样本：
+
+```python
+df['y'].value_counts()/len(df)
+
+#no     0.887346
+#yes    0.112654
+#Name: y, dtype: float64
+
+```
+
+可以看出少数类的占比为11.2%，属于**中度失衡样本**。
+
+```python
+# 只保留数值型变量（简单操作）
+df = df.loc[:,
+['age', 'duration', 'campaign', 'pdays',
+       'previous', 'emp.var.rate', 'cons.price.idx',
+       'cons.conf.idx', 'euribor3m', 'nr.employed','y']]
+# target由 yes/no 转为 0/1
+df['y'] = df['y'].apply(lambda x: 1 if x=='yes' else 0)
+df['y'].value_counts()
+
+#0    36548
+#1     4640
+#Name: y, dtype: int64
+
+```
+
+
+
+##### 🌈1、随机欠采样的实现
+
+欠采样在imblearn库中也是有方法可以用的，那就是 `under_sampling.RandomUnderSampler`，我们可以使用把方法引入，然后调用它。可见，原先0的样本有21942，欠采样之后就变成了与1一样的数量了（即2770），实现了50%/50%的类别分布。
+
+```python
+# 1、随机欠采样的实现
+# 导入相关的方法
+from imblearn.under_sampling import RandomUnderSampler
+
+# 划分因变量和自变量
+X = df.iloc[:,:-1]
+y = df.iloc[:,-1]
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.40)
+
+# 统计当前的类别占比情况
+print("Before undersampling: ", Counter(y_train))
+
+# 调用方法进行欠采样
+undersample = RandomUnderSampler(sampling_strategy='majority')
+
+# 获得欠采样后的样本
+X_train_under, y_train_under = undersample.fit_resample(X_train, y_train)
+
+# 统计欠采样后的类别占比情况
+print("After undersampling: ", Counter(y_train_under))
+
+# 调用支持向量机算法 SVC
+model=SVC()
+
+clf = model.fit(X_train, y_train)
+pred = clf.predict(X_test)
+print("ROC AUC score for original data: ", roc_auc_score(y_test, pred))
+
+clf_under = model.fit(X_train_under, y_train_under)
+pred_under = clf_under.predict(X_test)
+print("ROC AUC score for undersampled data: ", roc_auc_score(y_test, pred_under))
+
+# Output：
+#Before undersampling:  Counter({0: 21942, 1: 2770})
+#After undersampling:  Counter({0: 2770, 1: 2770})
+#ROC AUC score for original data:  0.603521152028
+#ROC AUC score for undersampled data:  0.829234085179
+```
+
+
+
+🌈2、使用SMOTE进行过采样
+
+过采样技术中，SMOTE被认为是最为流行的数据采样算法之一，它是基于随机过采样算法的一种改良版本，由于随机过采样只是采取了简单复制样本的策略来进行样本的扩增，这样子会导致一个比较直接的问题就是过拟合。因此，SMOTE的基本思想就是对少数类样本进行分析并合成新样本添加到数据集中。
+
+> 算法流程如下：
+>
+> (1)对于少数类中每一个样本x，以欧氏距离为标准计算它到少数类样本集中所有样本的距离，得到其k近邻。
+>
+> (2)根据样本不平衡比例设置一个采样比例以确定采样倍率N，对于每一个少数类样本x，从其k近邻中随机选择若干个样本，假设选择的近邻为xn。
+>
+> (3)对于每一个随机选出的近邻xn，分别与原样本按照如下的公式构建新的样本。
+
+![image-20201114230817992](./arrests/64.png)
+
+```python
+# 2、使用SMOTE进行过采样
+# 导入相关的方法
+from imblearn.over_sampling import SMOTE
+
+# 划分因变量和自变量
+X = df.iloc[:,:-1]
+y = df.iloc[:,-1]
+
+# 划分训练集和测试集
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.40)
+
+# 统计当前的类别占比情况
+print("Before oversampling: ", Counter(y_train))
+
+# 调用方法进行过采样
+SMOTE = SMOTE()
+
+# 获得过采样后的样本
+X_train_SMOTE, y_train_SMOTE = SMOTE.fit_resample(X_train, y_train)
+
+# 统计过采样后的类别占比情况
+print("After oversampling: ",Counter(y_train_SMOTE))
+
+# 调用支持向量机算法 SVC
+model=SVC()
+
+clf = model.fit(X_train, y_train)
+pred = clf.predict(X_test)
+print("ROC AUC score for original data: ", roc_auc_score(y_test, pred))
+
+clf_SMOTE= model.fit(X_train_SMOTE, y_train_SMOTE)
+pred_SMOTE = clf_SMOTE.predict(X_test)
+print("ROC AUC score for oversampling data: ", roc_auc_score(y_test, pred_SMOTE))
+
+# Output：
+#Before oversampling:  Counter({0: 21980, 1: 2732})
+#After oversampling:  Counter({0: 21980, 1: 21980})
+#ROC AUC score for original data:  0.602555700614
+#ROC AUC score for oversampling data:  0.844305732561
+```
+
+
+
+🌈3、欠采样和过采样的结合（使用pipeline）
+
+那如果我们需要同时使用过采样以及欠采样，那该怎么做呢？其实很简单，就是使用 `pipeline`来实现。
+
+```python
+#  3、欠采样和过采样的结合（使用pipeline）
+# 导入相关的方法
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline
+
+# 划分因变量和自变量
+X = df.iloc[:,:-1]
+y = df.iloc[:,-1]
+
+#  定义管道
+model = SVC()
+over = SMOTE(sampling_strategy=0.4)
+under = RandomUnderSampler(sampling_strategy=0.5)
+steps = [('o', over), ('u', under), ('model', model)]
+pipeline = Pipeline(steps=steps)
+
+# 评估效果
+scores = cross_val_score(pipeline, X, y, scoring='roc_auc', cv=5, n_jobs=-1)
+score = mean(scores)
+print('ROC AUC score for the combined sampling method: %.3f' % score)
+
+# Output：
+#ROC AUC score for the combined sampling method: 0.937
+```
+
+
+
+🌈4、如何获取最佳的采样率？
+
+在上面的栗子中，我们都是默认经过采样变成50：50，但是这样子的采样比例并非最优选择，因此我们引入一个叫 `最佳采样率`的概念，然后我们通过设置采样的比例，采样网格搜索的方法去找到这个最优点。
+
+```python
+# 4、如何获取最佳的采样率？
+# 导入相关的方法
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline
+
+# 划分因变量和自变量
+X = df.iloc[:,:-1]
+y = df.iloc[:,-1]
+
+# values to evaluate
+over_values = [0.3,0.4,0.5]
+under_values = [0.7,0.6,0.5]
+for o in over_values:
+  for u in under_values:
+    # define pipeline
+    model = SVC()
+    over = SMOTE(sampling_strategy=o)
+    under = RandomUnderSampler(sampling_strategy=u)
+    steps = [('over', over), ('under', under), ('model', model)]
+    pipeline = Pipeline(steps=steps)
+    # evaluate pipeline
+    scores = cross_val_score(pipeline, X, y, scoring='roc_auc', cv=5, n_jobs=-1)
+    score = mean(scores)
+    print('SMOTE oversampling rate:%.1f, Random undersampling rate:%.1f , Mean ROC AUC: %.3f' % (o, u, score))
+    
+
+# Output：    
+#SMOTE oversampling rate:0.3, Random undersampling rate:0.7 , Mean ROC AUC: 0.938
+#SMOTE oversampling rate:0.3, Random undersampling rate:0.6 , Mean ROC AUC: 0.936
+#SMOTE oversampling rate:0.3, Random undersampling rate:0.5 , Mean ROC AUC: 0.937
+#SMOTE oversampling rate:0.4, Random undersampling rate:0.7 , Mean ROC AUC: 0.938
+#SMOTE oversampling rate:0.4, Random undersampling rate:0.6 , Mean ROC AUC: 0.937
+#SMOTE oversampling rate:0.4, Random undersampling rate:0.5 , Mean ROC AUC: 0.938
+#SMOTE oversampling rate:0.5, Random undersampling rate:0.7 , Mean ROC AUC: 0.939
+#SMOTE oversampling rate:0.5, Random undersampling rate:0.6 , Mean ROC AUC: 0.938
+#SMOTE oversampling rate:0.5, Random undersampling rate:0.5 , Mean ROC AUC: 0.938
+```
+
+从结果日志来看，最优的采样率就是过采样0.5，欠采样0.7。
+
+
+
+最后，想和大家说的是没有绝对的套路，只有合适的套路，无论是欠采样还是过采样，只有合适才最重要。还有，欠采样的确会比过采样“省钱”哈（从训练时间上很直观可以感受到）。
+
+
+
+#### 📖 References
+
+[1] SMOTE算法 https://www.jianshu.com/p/13fc0f7f5565
+
+[2] How to deal with imbalanced data in Python
+
 
 ![image](./arrests/底图2.0.png)
 
