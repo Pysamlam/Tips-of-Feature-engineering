@@ -1005,6 +1005,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+from scipy.stats import norm
+
 # 读取数据集
 train = pd.read_csv('./data/house-prices-advanced-regression-techniques/train.csv')
 train.head()
